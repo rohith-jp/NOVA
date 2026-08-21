@@ -1,16 +1,33 @@
 import logging
+import ssl
 import os
 from typing import Optional
 from pydantic import BaseModel
 from celery import Celery
 
+from app.core.config import settings
 from app.core.firewall import sanitize_or_reject_external_input, PromptInjectionBlockedError
 
 logger = logging.getLogger(__name__)
 
 # Initialize a Celery client to communicate with the worker
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-celery_client = Celery("nova_client", broker=redis_url, backend=redis_url)
+redis_url = settings.REDIS_URL
+
+# Upstash Redis requires SSL options for rediss:// URLs
+_broker_ssl: dict | None = None
+if redis_url.startswith("rediss://"):
+    _broker_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
+
+celery_client = Celery(
+    "nova_client",
+    broker=redis_url,
+    backend=redis_url,
+)
+if _broker_ssl:
+    celery_client.conf.update(
+        broker_use_ssl=_broker_ssl,
+        redis_backend_use_ssl=_broker_ssl,
+    )
 
 class BrowserResult(BaseModel):
     url: str

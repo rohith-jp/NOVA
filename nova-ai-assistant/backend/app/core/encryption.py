@@ -20,12 +20,13 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Derive a 256-bit (32-byte) key from environment secret
-_RAW_SECRET = (
-    os.getenv("ENCRYPTION_SECRET_KEY")
-    or settings.SUPABASE_SERVICE_ROLE_KEY
-    or "nova-fallback-encryption-secret-32bytes-key"
-)
+# Derive a 256-bit (32-byte) key from environment secret.
+# ENCRYPTION_SECRET_KEY must be set explicitly in production.
+# Falling back to the service role key would silently break decryption
+# if that key is ever rotated — always set ENCRYPTION_SECRET_KEY separately.
+_RAW_SECRET = settings.ENCRYPTION_SECRET_KEY or settings.SUPABASE_SERVICE_ROLE_KEY
+if not _RAW_SECRET:
+    _RAW_SECRET = "nova-fallback-encryption-secret-32bytes-key"
 _ENCRYPTION_KEY_32BYTES = hashlib.sha256(_RAW_SECRET.encode("utf-8")).digest()
 _AES_GCM = AESGCM(_ENCRYPTION_KEY_32BYTES)
 _NONCE_BYTE_LENGTH = 12  # Standard 96-bit nonce for AES-GCM

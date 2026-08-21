@@ -1,6 +1,6 @@
-# NOVA Backend — Python dependencies
-# For reproducible deploys, Railway (and local venvs) should install from this file.
-# Pin versions to avoid silent breakage on redeploy.
+# NOVA Celery Worker — Python dependencies
+# The worker also imports from the backend app package (app.core.*, app.db.*),
+# so it installs the same core deps as the backend.
 
 fastapi==0.141.1
 uvicorn[standard]==0.52.4
@@ -10,15 +10,12 @@ python-dotenv==1.0.1
 supabase==2.31.0
 psycopg2-binary==2.9.10
 
-# Celery + Redis (broker/backend)
+# Celery + Redis
 celery==5.6.3
 redis==8.1.0
 
-# AI — Google Gemini
+# AI — Google Gemini (used by planner/gemini shared service)
 google-genai==1.25.0
-
-# AI — Anthropic Claude
-anthropic==0.125.0
 
 # Security & auth
 argon2-cffi==25.1.0
@@ -29,8 +26,11 @@ PyJWT==2.13.0
 # Memory / embeddings
 sentence-transformers==6.0.0
 
-# HTTP client (used by TTS and STT services)
+# HTTP client
 httpx==0.28.1
 
-# Browser automation (Celery task)
+# Browser automation
 playwright==1.62.0
+
+# Anthropic Claude
+anthropic==0.125.0

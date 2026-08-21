@@ -1,8 +1,9 @@
-import os
 import httpx
 import logging
 from pydantic import BaseModel
 from typing import Optional
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -10,11 +11,14 @@ class TTSResult(BaseModel):
     audio_data: Optional[bytes] = None
     error: Optional[str] = None
 
-def generate_speech(text: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> TTSResult:
+def generate_speech(text: str, voice_id: str | None = None) -> TTSResult:
     """
     Synthesizes speech from text using ElevenLabs API.
+    voice_id defaults to ELEVENLABS_VOICE_ID from settings.
     """
-    api_key = os.getenv("ELEVENLABS_API_KEY")
+    api_key = settings.ELEVENLABS_API_KEY
+    if not voice_id:
+        voice_id = settings.ELEVENLABS_VOICE_ID
     if not api_key:
         return TTSResult(error="ELEVENLABS_API_KEY is not configured.")
         

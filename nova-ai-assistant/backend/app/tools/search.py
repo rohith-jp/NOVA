@@ -1,10 +1,10 @@
-import os
 import json
 import urllib.request
 import urllib.error
 import logging
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+from app.core.config import settings
 from app.core.firewall import sanitize_or_reject_external_input, PromptInjectionBlockedError
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def perform_web_search(query: str, max_results: int = 3) -> SearchResponse:
     Executes a web search using the Tavily API, normalizes results,
     and passes external content through the Prompt-Injection Firewall.
     """
-    api_key = os.getenv("TAVILY_API_KEY")
+    api_key = settings.TAVILY_API_KEY
     if not api_key:
         logger.error("TAVILY_API_KEY environment variable is not set.")
         return SearchResponse(query=query, results=[], error="Search API is not configured.")

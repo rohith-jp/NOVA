@@ -1,0 +1,30 @@
+# ============================================================
+# Railway multi-service configuration for NOVA
+# Docs: https://docs.railway.app/reference/config-as-code
+# ============================================================
+
+[build]
+# Each service has its own Dockerfile; build context is the repo root
+
+# ─── FastAPI Backend service ─────────────────────────────────
+[services.backend]
+source = "."
+dockerfilePath = "backend/Dockerfile"
+# Railway will inject $PORT automatically
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+[services.backend.deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# ─── Celery Worker service ────────────────────────────────────
+[services.celery-worker]
+source = "."
+dockerfilePath = "worker/Dockerfile"
+
+[services.celery-worker.deploy]
+startCommand = "celery -A worker.celery_app worker --loglevel=info --concurrency=${CELERYD_CONCURRENCY:-2}"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

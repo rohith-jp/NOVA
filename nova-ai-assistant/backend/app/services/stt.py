@@ -1,8 +1,9 @@
-import os
 import httpx
 import logging
 from pydantic import BaseModel
 from typing import Optional
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ def transcribe_audio(audio_data: bytes, filename: str = "audio.wav") -> STTResul
     """
     Transcribes audio bytes to text using OpenAI Whisper API.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = settings.OPENAI_API_KEY
     if not api_key:
         return STTResult(text="", error="OPENAI_API_KEY is not configured.")
         
