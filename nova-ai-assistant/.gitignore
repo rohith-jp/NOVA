@@ -1,0 +1,87 @@
+# ============================================================
+# NOVA AI Assistant — Monorepo .gitignore
+# ============================================================
+
+# ─── Environment & Secrets ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# ─── Node / Frontend ────────────────────────────────────────
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+build/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+.npm/
+.pnp
+.pnp.js
+.yarn/
+
+# ─── Python / Backend & Worker ──────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.log
+
+# ─── Database / Migrations ──────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+
+# ─── Caches & Temporary Files ───────────────────────────────
+.cache/
+*.swp
+*.swo
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE & Editor ───────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ─── Playwright ─────────────────────────────────────────────
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ─── Hugging Face / ML model cache ──────────────────────────
+.cache/huggingface/
+*.bin
+*.safetensors
+*.onnx
+
+# ─── Build artifacts ────────────────────────────────────────
+*.pyc
+*.pyo

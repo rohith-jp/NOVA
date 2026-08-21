@@ -1,0 +1,42 @@
+{
+  "name": "nova-ai",
+  "version": "1.0.0",
+  "description": "NOVA AI Assistant External Services Integration",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test:ai": "node src/tests/test-ai.js",
+    "test:supabase": "node src/tests/test-supabase.js",
+    "test:redis": "node src/tests/test-redis.js",
+    "test:tavily": "node src/tests/test-tavily.js",
+    "test:elevenlabs": "node src/tests/test-elevenlabs.js",
+    "test:vercel": "node src/tests/test-vercel.js",
+    "test:github": "node src/tests/test-github.js",
+    "test:all": "node src/tests/test-all.js"
+  },
+  "keywords": [
+    "nova",
+    "ai",
+    "gemini",
+    "groq",
+    "supabase",
+    "upstash",
+    "tavily",
+    "elevenlabs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.17.1",
+    "@octokit/rest": "^22.0.1",
+    "@supabase/supabase-js": "^2.112.3",
+    "@tavily/core": "^0.7.7",
+    "@upstash/redis": "^1.38.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "elevenlabs": "^1.59.0",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.5.0"
+  }
+}

@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+celery
+redis
+supabase
+sentence-transformers
+playwright
+argon2-cffi
+cryptography
+python-jose[cryptography]
+anthropic
+google-genai
+python-dotenv
+psycopg2-binary
