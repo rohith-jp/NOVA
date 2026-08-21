@@ -34,3 +34,7 @@ httpx==0.28.1
 
 # Browser automation (Celery task)
 playwright==1.62.0
+
+# Testing (used in CI — safe to install in prod too, no runtime cost)
+pytest==8.3.5
+pytest-asyncio==0.24.0

@@ -1,0 +1,33 @@
+# ruff configuration for NOVA backend
+# Docs: https://docs.astral.sh/ruff/configuration/
+
+target-version = "py312"
+line-length = 100
+
+[lint]
+# Rules enabled: pyflakes (F), pycodestyle (E/W), isort (I),
+# bugbear (B), comprehensions (C4), simplify (SIM)
+select = ["E", "F", "W", "I", "B", "C4", "SIM"]
+
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # do not perform function calls in default args (FastAPI Depends pattern)
+    "SIM108", # ternary operator — sometimes less readable
+    "E711",   # comparison to None — SQLAlchemy patterns use ==
+    "E712",   # comparison to True/False
+]
+
+# Paths to exclude from linting
+exclude = [
+    "__pycache__",
+    ".venv",
+    "venv",
+    "*.pyc",
+]
+
+[lint.isort]
+known-first-party = ["app"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

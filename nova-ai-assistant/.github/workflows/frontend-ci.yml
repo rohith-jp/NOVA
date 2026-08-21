@@ -1,0 +1,120 @@
+# ============================================================
+# NOVA — Frontend CI
+#
+# Runs on every push / PR that touches frontend code.
+#
+# Jobs (each depends on the previous):
+#   lint       → ESLint via `next lint`
+#   typecheck  → TypeScript via `tsc --noEmit`
+#   build      → `next build` — the real gate (fails = broken app)
+#
+# Public env vars in build are safe placeholders — no real secrets.
+# Real values live in Railway / Vercel env variables only.
+# ============================================================
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "nova-ai-assistant/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "nova-ai-assistant/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+defaults:
+  run:
+    working-directory: nova-ai-assistant/frontend
+
+jobs:
+  # ── 1. Lint ──────────────────────────────────────────────
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nova-ai-assistant/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      # `next lint` uses the project's eslint.config.mjs automatically
+      - name: Run ESLint via Next.js
+        run: npx next lint --max-warnings 0
+
+  # ── 2. Type-check ────────────────────────────────────────
+  typecheck:
+    name: Type Check (TypeScript)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nova-ai-assistant/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+  # ── 3. Build ─────────────────────────────────────────────
+  build:
+    name: Next.js Build
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+
+    # ── Safe CI placeholder env vars ─────────────────────
+    # NEXT_PUBLIC_* values are embedded at build time.
+    # These are fake placeholders so the build doesn't crash.
+    # Production values are set in Railway / Vercel — never here.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci_placeholder_anon_key"
+      NEXT_PUBLIC_API_URL: "https://placeholder.up.railway.app"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nova-ai-assistant/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Build Next.js
+        run: npm run build
+
+      # Keep .next/standalone for potential deployment inspection
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+          path: |
+            nova-ai-assistant/frontend/.next/
+            !nova-ai-assistant/frontend/.next/cache/
+          retention-days: 3
