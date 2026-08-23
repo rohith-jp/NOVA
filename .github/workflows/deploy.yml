@@ -1,0 +1,228 @@
+# ================================================================
+# NOVA — Deploy to Railway
+#
+# Fires ONLY after BOTH "Backend CI" AND "Frontend CI" succeed
+# on main. Uses workflow_run — the correct GitHub pattern for
+# "deploy only if tests pass."
+#
+# Manual re-trigger: Actions tab → Deploy to Railway → Run workflow
+#
+# Required GitHub Secrets (repo Settings → Secrets → Actions):
+#   RAILWAY_TOKEN               — Railway project-scoped API token
+#   RAILWAY_BACKEND_SERVICE_ID  — service ID for nova-backend
+#   RAILWAY_WORKER_SERVICE_ID   — service ID for nova-worker
+#
+# How to get service IDs:
+#   railway service list --json
+#
+# Secrets are NEVER echoed or interpolated into log output.
+# The Railway CLI reads RAILWAY_TOKEN silently from the environment.
+# ================================================================
+name: Deploy to Railway
+
+on:
+  workflow_run:
+    workflows:
+      - "Backend CI"
+      - "Frontend CI"
+    branches: [main]
+    types: [completed]
+
+  # Manual re-deploy without a code push
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Service to deploy: backend | worker | both"
+        required: false
+        default: "both"
+
+# Only one deploy per branch at a time — never cancel in-flight
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # ── Gate: abort if the upstream CI run failed ────────────
+  check-ci:
+    name: CI gate
+    runs-on: ubuntu-latest
+    # For workflow_run: only proceed if the CI workflow passed.
+    # For workflow_dispatch: always proceed.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Report gate status
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "Triggered by  : ${{ github.event.workflow_run.name }}"
+            echo "CI conclusion : ${{ github.event.workflow_run.conclusion }}"
+          else
+            echo "Manual deploy : ${{ github.event.inputs.service }}"
+          fi
+          echo "Gate passed — proceeding to deploy."
+
+  # ── Deploy: FastAPI Backend ──────────────────────────────
+  deploy-backend:
+    name: "Deploy → nova-backend"
+    runs-on: ubuntu-latest
+    needs: check-ci
+    if: >
+      needs.check-ci.result == 'success' && (
+        github.event_name == 'workflow_run' ||
+        github.event.inputs.service == 'backend' ||
+        github.event.inputs.service == 'both'
+      )
+
+    environment:
+      name: production
+      url: https://nova-ai-production-67b9.up.railway.app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@latest --silent
+
+      # RAILWAY_TOKEN is read by the CLI automatically from env.
+      # Service ID comes from a secret — never hardcoded.
+      - name: Redeploy nova-backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway redeploy \
+            --service "${{ secrets.RAILWAY_BACKEND_SERVICE_ID }}" \
+            --yes
+
+      - name: Poll until backend is healthy (max 6 min)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Waiting for nova-backend deployment to succeed..."
+          for i in $(seq 1 24); do
+            STATUS=$(railway deployment list \
+              --service "${{ secrets.RAILWAY_BACKEND_SERVICE_ID }}" \
+              --json 2>/dev/null \
+              | python3 -c "
+          import sys, json
+          try:
+              data = json.load(sys.stdin)
+              print(data[0].get('status', 'UNKNOWN') if data else 'UNKNOWN')
+          except Exception:
+              print('UNKNOWN')
+          " 2>/dev/null || echo "UNKNOWN")
+            echo "  [$i/24] status: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Backend deployment succeeded."
+              exit 0
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CRASHED" ]; then
+              echo "Backend deployment failed: $STATUS"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for backend."
+          exit 1
+
+      - name: Smoke-test /health endpoint
+        run: |
+          echo "Smoke-testing /health..."
+          for i in 1 2 3 4 5; do
+            HTTP=$(curl --silent --max-time 10 \
+              --output /dev/null --write-out "%{http_code}" \
+              https://nova-ai-production-67b9.up.railway.app/health)
+            echo "  Attempt $i — HTTP $HTTP"
+            if [ "$HTTP" = "200" ]; then
+              echo "/health OK."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "/health did not return 200."
+          exit 1
+
+  # ── Deploy: Celery Worker ────────────────────────────────
+  deploy-worker:
+    name: "Deploy → nova-worker"
+    runs-on: ubuntu-latest
+    needs: check-ci
+    if: >
+      needs.check-ci.result == 'success' && (
+        github.event_name == 'workflow_run' ||
+        github.event.inputs.service == 'worker' ||
+        github.event.inputs.service == 'both'
+      )
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@latest --silent
+
+      - name: Redeploy nova-worker
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway redeploy \
+            --service "${{ secrets.RAILWAY_WORKER_SERVICE_ID }}" \
+            --yes
+
+      - name: Poll until worker is healthy (max 6 min)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Waiting for nova-worker deployment to succeed..."
+          for i in $(seq 1 24); do
+            STATUS=$(railway deployment list \
+              --service "${{ secrets.RAILWAY_WORKER_SERVICE_ID }}" \
+              --json 2>/dev/null \
+              | python3 -c "
+          import sys, json
+          try:
+              data = json.load(sys.stdin)
+              print(data[0].get('status', 'UNKNOWN') if data else 'UNKNOWN')
+          except Exception:
+              print('UNKNOWN')
+          " 2>/dev/null || echo "UNKNOWN")
+            echo "  [$i/24] status: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Worker deployment succeeded."
+              exit 0
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CRASHED" ]; then
+              echo "Worker deployment failed: $STATUS"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for worker."
+          exit 1
+
+  # ── Summary ─────────────────────────────────────────────
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-worker]
+    if: always()
+    steps:
+      - name: Report outcome
+        run: |
+          B="${{ needs.deploy-backend.result }}"
+          W="${{ needs.deploy-worker.result }}"
+          echo "======================================"
+          echo "  NOVA Deploy Summary"
+          echo "======================================"
+          echo "  nova-backend : $B"
+          echo "  nova-worker  : $W"
+          echo "======================================"
+          if [ "$B" = "failure" ] || [ "$W" = "failure" ]; then
+            echo "One or more deployments FAILED."
+            exit 1
+          fi
+          echo "All deployments completed successfully."
