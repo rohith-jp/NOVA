@@ -35,12 +35,10 @@ def run_migrations():
     print("\n--- Verifying Created Tables ---")
     for table in tables:
         cursor.execute(
-            """
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' AND table_name = %s 
-            ORDER BY ordinal_position;
-            """,
+            "SELECT column_name, data_type "
+            "FROM information_schema.columns "
+            "WHERE table_schema = 'public' AND table_name = %s "
+            "ORDER BY ordinal_position;",
             (table,),
         )
 

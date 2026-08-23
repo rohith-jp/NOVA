@@ -1,6 +1,9 @@
+import contextlib
 import json
 import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from app.services.executor import PlanActVerifyExecutor
 
 logger = logging.getLogger(__name__)
@@ -78,10 +81,8 @@ async def websocket_agent_stream(websocket: WebSocket) -> None:
         logger.info("[WS STREAM] Client disconnected.")
     except Exception as e:
         logger.error(f"[WS STREAM] Unexpected error: {e}")
-        try:
+        with contextlib.suppress(Exception):
             await websocket.send_json({
                 "event": "ERROR",
                 "data": {"error": f"Internal stream error: {str(e)}"},
             })
-        except Exception:
-            pass

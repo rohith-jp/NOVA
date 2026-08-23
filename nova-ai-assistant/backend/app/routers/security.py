@@ -7,13 +7,13 @@ Strict Security Guarantee:
 Never exposes raw encryption keys, JWT secrets, database connection strings, or sensitive payloads.
 """
 import time
-from typing import Dict, Any, List
-from fastapi import APIRouter, HTTPException
+from typing import Any, Dict, List
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.core.security import CurrentUser
-from app.core.audit_log import AuditLogChain, AuditLogEntry
-from app.core.firewall import inspect_external_input, FirewallDecision
+from app.core.audit_log import AuditLogChain
 
 router = APIRouter(prefix="/api/security", tags=["security"])
 

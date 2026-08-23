@@ -1,7 +1,8 @@
 """Memory router — provides endpoints to list, search, and store semantic vector memories."""
+from typing import Any, Dict, List
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 
 from app.core.security import CurrentUser
 from app.services import memory as memory_service
