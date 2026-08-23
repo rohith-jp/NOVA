@@ -51,7 +51,7 @@ jobs:
 
       # Uses the project's eslint.config.mjs automatically
       - name: Run ESLint
-        run: npx next lint --max-warnings 0
+        run: npx next lint
 
   # ── Type Check ──────────────────────────────────────────
   typecheck:

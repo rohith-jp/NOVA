@@ -9,7 +9,7 @@ It is an initial layer of defense and is not claimed to be 100% perfect.
 import re
 import logging
 from enum import Enum
-from typing import List, Optional
+from typing import List
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

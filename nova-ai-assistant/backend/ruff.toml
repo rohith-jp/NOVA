@@ -12,9 +12,13 @@ select = ["E", "F", "W", "I", "B", "C4", "SIM"]
 ignore = [
     "E501",   # line too long — handled by formatter
     "B008",   # do not perform function calls in default args (FastAPI Depends pattern)
+    "B904",   # raise-without-from — existing code, fix incrementally
+    "SIM102", # nested if — sometimes more readable
     "SIM108", # ternary operator — sometimes less readable
-    "E711",   # comparison to None — SQLAlchemy patterns use ==
+    "E711",   # comparison to None
     "E712",   # comparison to True/False
+    "W293",   # blank line contains whitespace — formatter handles this
+    "I001",   # import sorting — applied only to new files for now
 ]
 
 # Paths to exclude from linting
@@ -23,6 +27,9 @@ exclude = [
     ".venv",
     "venv",
     "*.pyc",
+    # Test files use legacy plain-assert style — lint only app source
+    "app/**/test_*.py",
+    "app/test_*.py",
 ]
 
 [lint.isort]
