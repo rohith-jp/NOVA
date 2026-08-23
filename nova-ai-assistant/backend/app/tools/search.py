@@ -1,11 +1,13 @@
 import json
-import urllib.request
-import urllib.error
 import logging
-from typing import List, Dict, Any, Optional
+import urllib.error
+import urllib.request
+from typing import List, Optional
+
 from pydantic import BaseModel
+
 from app.core.config import settings
-from app.core.firewall import sanitize_or_reject_external_input, PromptInjectionBlockedError
+from app.core.firewall import PromptInjectionBlockedError, sanitize_or_reject_external_input
 
 logger = logging.getLogger(__name__)
 

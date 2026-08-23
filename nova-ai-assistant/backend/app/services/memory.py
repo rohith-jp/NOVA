@@ -1,9 +1,10 @@
-import os
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from sentence_transformers import SentenceTransformer
-from app.db.supabase import get_supabase_admin_client
+
 from app.core.encryption import encrypt_field
+from app.db.supabase import get_supabase_admin_client
 
 logger = logging.getLogger(__name__)
 

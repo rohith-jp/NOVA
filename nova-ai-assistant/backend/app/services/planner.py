@@ -1,9 +1,9 @@
-import json
 import logging
-from typing import Optional, List
-from pydantic import BaseModel, Field, ValidationError
+from typing import List, Optional
+
 from google.genai import types
 from google.genai.errors import APIError
+from pydantic import BaseModel, Field, ValidationError
 
 from app.services.gemini import get_gemini_client
 

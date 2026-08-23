@@ -1,12 +1,12 @@
 import logging
 import ssl
-import os
 from typing import Optional
-from pydantic import BaseModel
+
 from celery import Celery
+from pydantic import BaseModel
 
 from app.core.config import settings
-from app.core.firewall import sanitize_or_reject_external_input, PromptInjectionBlockedError
+from app.core.firewall import PromptInjectionBlockedError, sanitize_or_reject_external_input
 
 logger = logging.getLogger(__name__)
 

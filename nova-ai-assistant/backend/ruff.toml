@@ -13,6 +13,7 @@ ignore = [
     "E501",   # line too long — handled by formatter
     "B008",   # do not perform function calls in default args (FastAPI Depends pattern)
     "B904",   # raise-without-from — existing code, fix incrementally
+    "B905",   # zip-without-explicit-strict — lists are always co-constructed
     "SIM102", # nested if — sometimes more readable
     "SIM108", # ternary operator — sometimes less readable
     "E711",   # comparison to None

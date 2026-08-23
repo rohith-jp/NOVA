@@ -160,7 +160,7 @@ class PlanActVerifyExecutor:
             state.error = "Unvalidated plan: zero steps present."
             return state
 
-        for step_def, step_rec in zip(plan.steps, state.steps):
+        for step_def, step_rec in zip(plan.steps, state.steps, strict=False):
             step_rec.status = StepStatus.IN_PROGRESS
             tool_name = step_def.tool
 

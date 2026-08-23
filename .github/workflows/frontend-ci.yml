@@ -49,9 +49,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
 
-      # Uses the project's eslint.config.mjs automatically
+      # `next lint` auto-detects pages/src dirs from cwd
       - name: Run ESLint
-        run: npx next lint .
+        run: npx next lint --dir src
 
   # ── Type Check ──────────────────────────────────────────
   typecheck:
