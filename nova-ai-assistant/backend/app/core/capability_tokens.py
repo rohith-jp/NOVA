@@ -7,6 +7,7 @@ Each tool invocation must present a valid capability token scoped specifically t
   3. The calling user_id, task_id, and plan_id
   4. A short time-to-live expiration window (default 60 seconds)
 """
+
 import os
 import time
 import uuid
@@ -21,9 +22,8 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 # Secret key for HMAC-SHA256 signing of capability tokens
-_CAPABILITY_SECRET = (
-    settings.SUPABASE_SERVICE_ROLE_KEY
-    or os.getenv("CAPABILITY_TOKEN_SECRET", "nova-default-capability-secret-key-32bytes")
+_CAPABILITY_SECRET = settings.SUPABASE_SERVICE_ROLE_KEY or os.getenv(
+    "CAPABILITY_TOKEN_SECRET", "nova-default-capability-secret-key-32bytes"
 )
 _ALGORITHM = "HS256"
 _DEFAULT_TTL_SECONDS = 60  # Short expiration window (60s)
@@ -33,24 +33,29 @@ _DEFAULT_TTL_SECONDS = 60  # Short expiration window (60s)
 # Errors
 # ---------------------------------------------------------------------------
 
+
 class CapabilityTokenError(Exception):
     """Base exception for capability token failures."""
+
     pass
 
 
 class ExpiredCapabilityTokenError(CapabilityTokenError):
     """Raised when a capability token has expired."""
+
     pass
 
 
 class UnauthorizedCapabilityTokenError(CapabilityTokenError):
     """Raised when a capability token has invalid scope or tool mismatch."""
+
     pass
 
 
 # ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
+
 
 class CapabilityTokenPayload(BaseModel):
     jti: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -66,6 +71,7 @@ class CapabilityTokenPayload(BaseModel):
 # ---------------------------------------------------------------------------
 # Token Creator & Verifier
 # ---------------------------------------------------------------------------
+
 
 def create_capability_token(
     user_id: str,
@@ -135,15 +141,12 @@ def verify_capability_token(
     except JWTError as e:
         raise CapabilityTokenError(f"Invalid capability token signature or format: {str(e)}") from e
 
-
     payload = CapabilityTokenPayload(**data)
     now = time.time()
 
     # 1. Check expiration
     if now > payload.exp:
-        raise ExpiredCapabilityTokenError(
-            f"Capability token expired {now - payload.exp:.1f}s ago."
-        )
+        raise ExpiredCapabilityTokenError(f"Capability token expired {now - payload.exp:.1f}s ago.")
 
     # 2. Check target tool association
     if payload.tool_name != required_tool:

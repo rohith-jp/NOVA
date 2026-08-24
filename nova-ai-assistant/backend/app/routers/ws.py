@@ -16,10 +16,12 @@ executor = PlanActVerifyExecutor()
 async def websocket_connect(websocket: WebSocket) -> None:
     """General WebSocket connection endpoint."""
     await websocket.accept()
-    await websocket.send_json({
-        "type": "connected",
-        "message": "NOVA WebSocket server connected.",
-    })
+    await websocket.send_json(
+        {
+            "type": "connected",
+            "message": "NOVA WebSocket server connected.",
+        }
+    )
     try:
         while True:
             data = await websocket.receive_text()
@@ -44,10 +46,12 @@ async def websocket_agent_stream(websocket: WebSocket) -> None:
         - ERROR: Safe error notification
     """
     await websocket.accept()
-    await websocket.send_json({
-        "event": "CONNECTED",
-        "message": "Connected to NOVA Agent Event Stream",
-    })
+    await websocket.send_json(
+        {
+            "event": "CONNECTED",
+            "message": "Connected to NOVA Agent Event Stream",
+        }
+    )
 
     try:
         while True:
@@ -55,20 +59,24 @@ async def websocket_agent_stream(websocket: WebSocket) -> None:
             try:
                 payload = json.loads(raw_text)
             except Exception:
-                await websocket.send_json({
-                    "event": "ERROR",
-                    "data": {"error": "Invalid JSON format received."},
-                })
+                await websocket.send_json(
+                    {
+                        "event": "ERROR",
+                        "data": {"error": "Invalid JSON format received."},
+                    }
+                )
                 continue
 
             command = payload.get("command", "")
             context = payload.get("context", None)
 
             if not command or not command.strip():
-                await websocket.send_json({
-                    "event": "ERROR",
-                    "data": {"error": "Command field is required and cannot be empty."},
-                })
+                await websocket.send_json(
+                    {
+                        "event": "ERROR",
+                        "data": {"error": "Command field is required and cannot be empty."},
+                    }
+                )
                 continue
 
             logger.info(f"[WS STREAM] Received command: '{command}'")
@@ -82,7 +90,9 @@ async def websocket_agent_stream(websocket: WebSocket) -> None:
     except Exception as e:
         logger.error(f"[WS STREAM] Unexpected error: {e}")
         with contextlib.suppress(Exception):
-            await websocket.send_json({
-                "event": "ERROR",
-                "data": {"error": f"Internal stream error: {str(e)}"},
-            })
+            await websocket.send_json(
+                {
+                    "event": "ERROR",
+                    "data": {"error": f"Internal stream error: {str(e)}"},
+                }
+            )

@@ -12,7 +12,9 @@ def test_schema():
 
     try:
         # 1. Insert test user
-        cur.execute("INSERT INTO users (email, full_name) VALUES ('test@nova.ai', 'Test User') RETURNING id;")
+        cur.execute(
+            "INSERT INTO users (email, full_name) VALUES ('test@nova.ai', 'Test User') RETURNING id;"
+        )
         user_id = cur.fetchone()[0]
         print(f"[OK] Inserted test user (ID: {user_id})")
 

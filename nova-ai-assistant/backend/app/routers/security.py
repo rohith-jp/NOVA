@@ -6,6 +6,7 @@ audit log history, and live hash-chain verification.
 Strict Security Guarantee:
 Never exposes raw encryption keys, JWT secrets, database connection strings, or sensitive payloads.
 """
+
 import time
 from typing import Any, Dict, List
 
@@ -27,28 +28,32 @@ _global_audit_chain.add_entry(
     user_id="system",
     task_id="genesis-task-001",
     action_type="SYSTEM_BOOT",
-    metadata={"component": "nova_core", "status": "initialized", "firewall_active": True}
+    metadata={"component": "nova_core", "status": "initialized", "firewall_active": True},
 )
 
 _global_audit_chain.add_entry(
     user_id="user-demo-123",
     task_id="task-web-search-04",
     action_type="CAPABILITY_TOKEN_ISSUED",
-    metadata={"tool_name": "tavily_search", "scope": "web_search:read", "ttl_seconds": 60}
+    metadata={"tool_name": "tavily_search", "scope": "web_search:read", "ttl_seconds": 60},
 )
 
 _global_audit_chain.add_entry(
     user_id="user-demo-123",
     task_id="task-browser-02",
     action_type="FIREWALL_INSPECTED",
-    metadata={"source": "playwright_browser", "decision": "ALLOW", "risk_score": 0.0}
+    metadata={"source": "playwright_browser", "decision": "ALLOW", "risk_score": 0.0},
 )
 
 _global_audit_chain.add_entry(
     user_id="user-demo-123",
     task_id="task-browser-02",
     action_type="PROMPT_INJECTION_BLOCKED",
-    metadata={"source": "untrusted_web_page", "matched_rules": ["INSTRUCTION_OVERRIDE"], "risk_score": 0.9}
+    metadata={
+        "source": "untrusted_web_page",
+        "matched_rules": ["INSTRUCTION_OVERRIDE"],
+        "risk_score": 0.9,
+    },
 )
 
 
@@ -60,7 +65,7 @@ _firewall_blocks: List[Dict[str, Any]] = [
         "source": "tavily_search",
         "matched_rules": ["INSTRUCTION_OVERRIDE"],
         "risk_score": 0.90,
-        "reason": "Suspicious prompt-injection patterns detected: INSTRUCTION_OVERRIDE"
+        "reason": "Suspicious prompt-injection patterns detected: INSTRUCTION_OVERRIDE",
     },
     {
         "id": "block-102",
@@ -68,8 +73,8 @@ _firewall_blocks: List[Dict[str, Any]] = [
         "source": "playwright_browser",
         "matched_rules": ["CREDENTIAL_EXFILTRATION", "ROLE_HIJACK"],
         "risk_score": 0.95,
-        "reason": "Suspicious prompt-injection patterns detected: CREDENTIAL_EXFILTRATION, ROLE_HIJACK"
-    }
+        "reason": "Suspicious prompt-injection patterns detected: CREDENTIAL_EXFILTRATION, ROLE_HIJACK",
+    },
 ]
 
 # Capability token metrics
@@ -77,11 +82,12 @@ _token_stats = {
     "total_issued": 48,
     "active_tokens": 3,
     "validated_calls": 45,
-    "rejections": 3, # e.g. expired or wrong scope rejections
+    "rejections": 3,  # e.g. expired or wrong scope rejections
 }
 
 
 # ─── Response Models ───────────────────────────────────────────────────────────
+
 
 class VerifyChainResponse(BaseModel):
     is_valid: bool
@@ -93,6 +99,7 @@ class VerifyChainResponse(BaseModel):
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
+
 @router.get("/dashboard")
 def get_security_dashboard(user: CurrentUser) -> Dict[str, Any]:
     """
@@ -100,21 +107,27 @@ def get_security_dashboard(user: CurrentUser) -> Dict[str, Any]:
     Excludes all raw keys, secrets, or internal sensitive parameters.
     """
     is_valid, reason, fail_idx = _global_audit_chain.verify_chain()
-    
+
     # Format user-safe audit entries (strip raw internal secrets if any)
     user_safe_audit_entries = []
     for entry in _global_audit_chain.entries[-10:]:  # last 10 entries
-        user_safe_audit_entries.append({
-            "entry_id": entry.entry_id,
-            "timestamp": entry.timestamp,
-            "user_id": entry.user_id,
-            "task_id": entry.task_id,
-            "action_type": entry.action_type,
-            "metadata": entry.action_metadata,
-            "prev_hash_abbrev": f"{entry.prev_hash[:8]}...{entry.prev_hash[-8:]}" if len(entry.prev_hash) > 16 else entry.prev_hash,
-            "curr_hash_abbrev": f"{entry.curr_hash[:8]}...{entry.curr_hash[-8:]}" if len(entry.curr_hash) > 16 else entry.curr_hash,
-        })
-        
+        user_safe_audit_entries.append(
+            {
+                "entry_id": entry.entry_id,
+                "timestamp": entry.timestamp,
+                "user_id": entry.user_id,
+                "task_id": entry.task_id,
+                "action_type": entry.action_type,
+                "metadata": entry.action_metadata,
+                "prev_hash_abbrev": f"{entry.prev_hash[:8]}...{entry.prev_hash[-8:]}"
+                if len(entry.prev_hash) > 16
+                else entry.prev_hash,
+                "curr_hash_abbrev": f"{entry.curr_hash[:8]}...{entry.curr_hash[-8:]}"
+                if len(entry.curr_hash) > 16
+                else entry.curr_hash,
+            }
+        )
+
     return {
         "capability_tokens": {
             "total_issued": _token_stats["total_issued"],
@@ -136,7 +149,7 @@ def get_security_dashboard(user: CurrentUser) -> Dict[str, Any]:
             "last_verified_at": time.time(),
             "genesis_hash": AuditLogChain.GENESIS_HASH[:16] + "...",
             "recent_entries": user_safe_audit_entries,
-        }
+        },
     }
 
 

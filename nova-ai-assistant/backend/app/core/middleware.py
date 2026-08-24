@@ -4,6 +4,7 @@ Rate limiter is intentionally simple (in-memory per-IP sliding window).
 It acts as the structural foundation; a Redis-backed limiter will replace
 it once Celery / Redis integration is added.
 """
+
 import time
 from collections import defaultdict, deque
 from typing import Callable
@@ -16,6 +17,7 @@ from starlette.types import ASGIApp
 # ---------------------------------------------------------------------------
 # Request Logging Middleware
 # ---------------------------------------------------------------------------
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Logs method, path, status code, and wall-clock latency for every request."""
@@ -41,7 +43,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 # ---------------------------------------------------------------------------
 
 RATE_LIMIT_WINDOW_SEC = 60
-RATE_LIMIT_MAX_CALLS = 120   # requests per minute per IP
+RATE_LIMIT_MAX_CALLS = 120  # requests per minute per IP
 
 _rate_limit_store: dict[str, deque] = defaultdict(deque)
 

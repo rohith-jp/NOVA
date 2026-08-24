@@ -1,4 +1,5 @@
 """Memory router — provides endpoints to list, search, and store semantic vector memories."""
+
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, Query
@@ -30,11 +31,7 @@ def search_user_memories(
 ) -> List[Dict[str, Any]]:
     """Semantic vector search for the authenticated user's memories."""
     try:
-        results = memory_service.search_memory(
-            user_id=user.id,
-            query=q,
-            match_count=limit
-        )
+        results = memory_service.search_memory(user_id=user.id, query=q, match_count=limit)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -45,10 +42,7 @@ def store_user_memory(user: CurrentUser, body: MemoryStoreRequest) -> Dict[str, 
     """Create and store a memory vector for the authenticated user."""
     try:
         payload = memory_service.create_memory(
-            user_id=user.id,
-            content=body.content,
-            memory_type=body.memory_type,
-            source=body.source
+            user_id=user.id, content=body.content, memory_type=body.memory_type, source=body.source
         )
         memory_id = memory_service.store_memory(payload)
         return {

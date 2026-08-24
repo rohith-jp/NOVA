@@ -3,6 +3,7 @@ Creates a confirmed Supabase user via Admin API (service role),
 then tests sign-in, session persistence, and sign-out.
 Uses SUPABASE_SERVICE_ROLE_KEY to bypass email rate limits.
 """
+
 import os
 from dotenv import load_dotenv
 from supabase import create_client
@@ -27,11 +28,13 @@ print()
 # 1. Create confirmed user via Admin API
 print("=== 1. CREATE CONFIRMED USER (admin) ===")
 try:
-    res = admin_client.auth.admin.create_user({
-        "email": TEST_EMAIL,
-        "password": TEST_PASSWORD,
-        "email_confirm": True,
-    })
+    res = admin_client.auth.admin.create_user(
+        {
+            "email": TEST_EMAIL,
+            "password": TEST_PASSWORD,
+            "email_confirm": True,
+        }
+    )
     if res.user:
         print(f"[OK] User created & confirmed: {res.user.id}")
     else:
@@ -47,10 +50,12 @@ print()
 # 2. Sign in with ANON client (as a real browser would)
 print("=== 2. SIGN IN (anon client) ===")
 try:
-    res2 = anon_client.auth.sign_in_with_password({
-        "email": TEST_EMAIL,
-        "password": TEST_PASSWORD,
-    })
+    res2 = anon_client.auth.sign_in_with_password(
+        {
+            "email": TEST_EMAIL,
+            "password": TEST_PASSWORD,
+        }
+    )
     session = res2.session
     user = res2.user
     if session and user:
@@ -99,6 +104,7 @@ print()
 print("=== 5. CLEANUP (admin delete test user) ===")
 try:
     from supabase import create_client as create  # avoid name collision
+
     admin_client.auth.admin.delete_user(user.id)
     print(f"[OK] Test user deleted: {user.id}")
 except Exception as e:

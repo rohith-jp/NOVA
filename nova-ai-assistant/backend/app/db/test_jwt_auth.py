@@ -7,6 +7,7 @@ Tests three scenarios against /api/auth/me:
 
 Uses admin API to create and delete a temporary test user.
 """
+
 import os
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
@@ -30,11 +31,13 @@ _token: str | None = None
 # ── Setup ──────────────────────────────────────────────────────────────────
 print("=== SETUP: create confirmed test user ===")
 try:
-    res = admin.auth.admin.create_user({
-        "email": TEST_EMAIL,
-        "password": TEST_PASSWORD,
-        "email_confirm": True,
-    })
+    res = admin.auth.admin.create_user(
+        {
+            "email": TEST_EMAIL,
+            "password": TEST_PASSWORD,
+            "email_confirm": True,
+        }
+    )
     _user_id = res.user.id
     print(f"[OK] User created: {_user_id}")
 except Exception as e:

@@ -29,6 +29,7 @@ if _broker_ssl:
         redis_backend_use_ssl=_broker_ssl,
     )
 
+
 class BrowserResult(BaseModel):
     url: str
     title: str
@@ -36,6 +37,7 @@ class BrowserResult(BaseModel):
     safe: bool = True
     blocked_reason: Optional[str] = None
     error: Optional[str] = None
+
 
 def read_webpage_safely(url: str, timeout_ms: int = 15000) -> BrowserResult:
     """
@@ -45,39 +47,38 @@ def read_webpage_safely(url: str, timeout_ms: int = 15000) -> BrowserResult:
     try:
         # Send task to Celery worker synchronously waiting for result
         async_result = celery_client.send_task(
-            "browser.fetch_page_content",
-            args=[url],
-            kwargs={"timeout_ms": timeout_ms}
+            "browser.fetch_page_content", args=[url], kwargs={"timeout_ms": timeout_ms}
         )
         # Wait slightly longer than the browser timeout
         task_result = async_result.get(timeout=(timeout_ms / 1000.0) + 5.0)
     except Exception as e:
         logger.error(f"Failed to communicate with browser worker: {e}")
-        return BrowserResult(url=url, title="", content="", error=f"Worker communication failed: {e}")
-        
+        return BrowserResult(
+            url=url, title="", content="", error=f"Worker communication failed: {e}"
+        )
+
     if task_result.get("error"):
         return BrowserResult(
             url=task_result["url"],
             title=task_result.get("title", ""),
             content="",
-            error=task_result["error"]
+            error=task_result["error"],
         )
-        
+
     raw_title = task_result.get("title", "")
     raw_content = task_result.get("content", "")
-    
+
     # -------------------------------------------------------------
     # Pass external text through the prompt-injection firewall
     # -------------------------------------------------------------
     try:
-        sanitized_content = sanitize_or_reject_external_input(raw_content, source="browser_automation")
+        sanitized_content = sanitize_or_reject_external_input(
+            raw_content, source="browser_automation"
+        )
         sanitized_title = sanitize_or_reject_external_input(raw_title, source="browser_automation")
-        
+
         return BrowserResult(
-            url=task_result["url"],
-            title=sanitized_title,
-            content=sanitized_content,
-            safe=True
+            url=task_result["url"], title=sanitized_title, content=sanitized_content, safe=True
         )
     except PromptInjectionBlockedError as pie:
         logger.warning(f"Blocked malicious browser content from {url}: {pie.result.reason}")
@@ -86,5 +87,5 @@ def read_webpage_safely(url: str, timeout_ms: int = 15000) -> BrowserResult:
             title="[BLOCKED TITLE]",
             content="[CONTENT BLOCKED BY FIREWALL]",
             safe=False,
-            blocked_reason=pie.result.reason
+            blocked_reason=pie.result.reason,
         )

@@ -3,6 +3,7 @@
 These routes exist purely to verify that JWT authentication works end-to-end.
 No agent functionality is implemented here.
 """
+
 from fastapi import APIRouter
 
 from app.core.security import CurrentUser

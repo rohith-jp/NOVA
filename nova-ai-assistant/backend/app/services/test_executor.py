@@ -39,7 +39,9 @@ def test_1_successful_plan():
     print_execution_summary("TEST 1: Successful Plan -> Act -> Verify Execution", state)
     assert state.status == PlanStatus.COMPLETED, "Plan status should be COMPLETED"
     assert len(state.steps) >= 2, "Should have at least 2 steps"
-    assert all(s.status == StepStatus.COMPLETED for s in state.steps), "All steps should be COMPLETED"
+    assert all(s.status == StepStatus.COMPLETED for s in state.steps), (
+        "All steps should be COMPLETED"
+    )
     print("[OK] Test 1 PASSED!")
 
 
@@ -81,16 +83,18 @@ def test_3_failed_action():
         ],
     )
 
-    state = executor.execute_command(
-        command="Run task with broken tool", force_plan=forced_plan
-    )
+    state = executor.execute_command(command="Run task with broken tool", force_plan=forced_plan)
 
     print_execution_summary("TEST 3: Failed Action (Tool Execution Crash)", state)
     assert state.status == PlanStatus.FAILED, "Plan status should be FAILED"
     assert state.steps[0].status == StepStatus.COMPLETED, "Step 1 should be COMPLETED"
     assert state.steps[1].status == StepStatus.FAILED, "Step 2 should be FAILED"
-    assert state.steps[2].status == StepStatus.PENDING, "Step 3 should remain PENDING (not executed)"
-    assert "failing_tool" in (state.steps[1].error or ""), "Step 2 error should mention failing_tool"
+    assert state.steps[2].status == StepStatus.PENDING, (
+        "Step 3 should remain PENDING (not executed)"
+    )
+    assert "failing_tool" in (state.steps[1].error or ""), (
+        "Step 2 error should mention failing_tool"
+    )
     print("[OK] Test 3 PASSED!")
 
 
@@ -129,8 +133,12 @@ def test_4_failed_verification():
     assert state.status == PlanStatus.FAILED, "Plan status should be FAILED"
     assert state.steps[0].status == StepStatus.COMPLETED, "Step 1 should be COMPLETED"
     assert state.steps[1].status == StepStatus.FAILED, "Step 2 should be FAILED"
-    assert state.steps[2].status == StepStatus.PENDING, "Step 3 should remain PENDING (not executed)"
-    assert "Verification failed" in (state.steps[1].error or ""), "Step 2 error should cite Verification failed"
+    assert state.steps[2].status == StepStatus.PENDING, (
+        "Step 3 should remain PENDING (not executed)"
+    )
+    assert "Verification failed" in (state.steps[1].error or ""), (
+        "Step 2 error should cite Verification failed"
+    )
     print("[OK] Test 4 PASSED!")
 
 

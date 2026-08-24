@@ -19,7 +19,9 @@ def get_supabase_admin_client() -> Client:
     if _supabase_admin_client is None:
         key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
         if not settings.SUPABASE_URL or not key:
-            raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in environment")
+            raise ValueError(
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in environment"
+            )
         _supabase_admin_client = create_client(settings.SUPABASE_URL, key)
     return _supabase_admin_client
 

@@ -7,9 +7,11 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class TTSResult(BaseModel):
     audio_data: Optional[bytes] = None
     error: Optional[str] = None
+
 
 def generate_speech(text: str, voice_id: str | None = None) -> TTSResult:
     """
@@ -21,29 +23,23 @@ def generate_speech(text: str, voice_id: str | None = None) -> TTSResult:
         voice_id = settings.ELEVENLABS_VOICE_ID
     if not api_key:
         return TTSResult(error="ELEVENLABS_API_KEY is not configured.")
-        
+
     if not text or not text.strip():
         return TTSResult(error="Text is empty or invalid.")
 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json"
-    }
-    
+    headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
+
     payload = {
         "text": text,
         "model_id": "eleven_monolingual_v1",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.5
-        }
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.5},
     }
 
     try:
         with httpx.Client() as client:
             response = client.post(url, headers=headers, json=payload, timeout=30.0)
-            
+
         if response.status_code == 200:
             return TTSResult(audio_data=response.content)
         else:

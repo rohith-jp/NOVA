@@ -19,10 +19,10 @@ class MockResponse:
 @patch("httpx.Client.post")
 def test_stt_transcription(mock_post):
     print("\n=== TEST 1: STT Transcription ===")
-    
+
     # Mock successful response
     mock_post.return_value = MockResponse(200, json_data={"text": "Hello world from Whisper."})
-    
+
     with patch.dict(os.environ, {"OPENAI_API_KEY": "fake_key"}):
         result = transcribe_audio(b"fake_audio_bytes", "test.wav")
         assert result.error is None
@@ -33,11 +33,11 @@ def test_stt_transcription(mock_post):
 @patch("httpx.Client.post")
 def test_stt_missing_api_key(mock_post):
     print("\n=== TEST 2: STT Missing API Key ===")
-    
+
     with patch.dict(os.environ, clear=True):
         if "OPENAI_API_KEY" in os.environ:
             del os.environ["OPENAI_API_KEY"]
-            
+
         result = transcribe_audio(b"fake_audio_bytes")
         assert result.text == ""
         assert "OPENAI_API_KEY is not configured" in result.error
@@ -47,10 +47,10 @@ def test_stt_missing_api_key(mock_post):
 @patch("httpx.Client.post")
 def test_tts_generation(mock_post):
     print("\n=== TEST 3: TTS Generation ===")
-    
+
     # Mock successful response
     mock_post.return_value = MockResponse(200, content=b"fake_audio_stream")
-    
+
     with patch.dict(os.environ, {"ELEVENLABS_API_KEY": "fake_key"}):
         result = generate_speech("Generate this speech.")
         assert result.error is None
@@ -61,10 +61,10 @@ def test_tts_generation(mock_post):
 @patch("httpx.Client.post")
 def test_tts_api_error(mock_post):
     print("\n=== TEST 4: TTS API Error ===")
-    
+
     # Mock failure response
     mock_post.return_value = MockResponse(401)
-    
+
     with patch.dict(os.environ, {"ELEVENLABS_API_KEY": "fake_key"}):
         result = generate_speech("Fail this speech.")
         assert result.audio_data is None

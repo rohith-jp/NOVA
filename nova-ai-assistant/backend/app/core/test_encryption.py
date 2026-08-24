@@ -32,7 +32,9 @@ def test_nonce_uniqueness():
 
     print(f"Ciphertext 1: {cipher_1[:30]}...")
     print(f"Ciphertext 2: {cipher_2[:30]}...")
-    assert cipher_1 != cipher_2, "Random IV must produce distinct ciphertexts for identical plaintext"
+    assert cipher_1 != cipher_2, (
+        "Random IV must produce distinct ciphertexts for identical plaintext"
+    )
     assert decrypt_field(cipher_1) == same_text
     assert decrypt_field(cipher_2) == same_text
     print("[OK] Nonce uniqueness PASSED!")

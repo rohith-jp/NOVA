@@ -26,7 +26,9 @@ def test_valid_capability_token():
         required_scope="web_search:read",
         expected_user_id="usr_12345",
     )
-    print(f"[OK] Token verified successfully! User: {payload.user_id}, Tool: {payload.tool_name}, Scopes: {payload.allowed_scopes}")
+    print(
+        f"[OK] Token verified successfully! User: {payload.user_id}, Tool: {payload.tool_name}, Scopes: {payload.allowed_scopes}"
+    )
     assert payload.user_id == "usr_12345"
     assert payload.tool_name == "web_search"
     assert "web_search:read" in payload.allowed_scopes

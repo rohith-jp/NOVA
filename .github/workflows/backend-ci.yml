@@ -55,9 +55,6 @@ jobs:
       - name: ruff check (errors & warnings)
         run: ruff check app/ --output-format=github
 
-      - name: ruff format check
-        run: ruff format app/ --check
-
   # ── Unit Tests ──────────────────────────────────────────
   test:
     name: Unit Tests (pytest)

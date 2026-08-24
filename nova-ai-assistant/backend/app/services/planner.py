@@ -14,21 +14,29 @@ logger = logging.getLogger(__name__)
 # Strict Pydantic Schemas for Plan Validation
 # ---------------------------------------------------------------------------
 
+
 class PlanStep(BaseModel):
     step_number: int = Field(..., ge=1, description="1-based ordered step number")
     purpose: str = Field(..., description="Purpose or description of what this step accomplishes")
-    tool: Optional[str] = Field(None, description="Name of the required tool if any, or null if no tool is needed")
-    expected_result: str = Field(..., description="Expected output or state change resulting from this step")
+    tool: Optional[str] = Field(
+        None, description="Name of the required tool if any, or null if no tool is needed"
+    )
+    expected_result: str = Field(
+        ..., description="Expected output or state change resulting from this step"
+    )
 
 
 class ExecutionPlan(BaseModel):
     summary: str = Field(..., description="High-level summary of the execution plan")
-    steps: List[PlanStep] = Field(..., min_items=2, max_items=4, description="List of 2 to 4 ordered steps")
+    steps: List[PlanStep] = Field(
+        ..., min_items=2, max_items=4, description="List of 2 to 4 ordered steps"
+    )
 
 
 # Custom Exception for Planner Failures
 class PlannerError(Exception):
     """Raised when plan generation or validation fails safely."""
+
     pass
 
 
@@ -98,7 +106,9 @@ def generate_plan(
 
         # Enforce 2-4 steps constraint explicitly
         if not (2 <= len(plan.steps) <= 4):
-            raise PlannerError(f"Plan must contain between 2 and 4 steps, but got {len(plan.steps)} steps.")
+            raise PlannerError(
+                f"Plan must contain between 2 and 4 steps, but got {len(plan.steps)} steps."
+            )
 
         return plan
 

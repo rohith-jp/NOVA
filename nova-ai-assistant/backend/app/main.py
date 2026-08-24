@@ -3,6 +3,7 @@
 Start with:
     uvicorn app.main:app --reload
 """
+
 import os
 from contextlib import asynccontextmanager
 
@@ -12,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from app.db.supabase import check_supabase_connection
-from app.routers import auth, commands, memory, security, tasks, voice, ws
+from app.routers import auth, commands, demo, memory, security, tasks, voice, ws
 
 load_dotenv()
 
@@ -80,13 +81,14 @@ app.add_middleware(RequestLoggingMiddleware)
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
-app.include_router(auth.router)       # /api/auth
-app.include_router(commands.router)   # /api/commands
-app.include_router(tasks.router)      # /api/tasks
-app.include_router(memory.router)     # /api/memory
-app.include_router(security.router)   # /api/security
-app.include_router(voice.router)      # /api/voice
-app.include_router(ws.router)         # /ws
+app.include_router(auth.router)  # /api/auth
+app.include_router(commands.router)  # /api/commands
+app.include_router(tasks.router)  # /api/tasks
+app.include_router(memory.router)  # /api/memory
+app.include_router(security.router)  # /api/security
+app.include_router(voice.router)  # /api/voice
+app.include_router(ws.router)  # /ws
+app.include_router(demo.router)  # /api/demo  (DEMO_MODE=true only)
 
 
 # ---------------------------------------------------------------------------

@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Enums & Event Types
 # ---------------------------------------------------------------------------
 
+
 class EventType(str, Enum):
     PLAN = "PLAN"
     TOOL_CALL = "TOOL_CALL"
@@ -64,20 +65,26 @@ class PlanExecutionState(BaseModel):
 
 ToolHandler = Callable[[Dict[str, Any]], Dict[str, Any]]
 
+
 def _mock_web_search(args: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "success", "data": "Top search results retrieved for query."}
+
 
 def _mock_database_query(args: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "success", "records": [{"id": 1, "task": "pending_job"}]}
 
+
 def _mock_email_notification(args: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "success", "delivered": True, "message_id": "msg_998877"}
+
 
 def _mock_financial_calculator(args: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "success", "monthly_payment": 1798.65, "currency": "USD"}
 
+
 def _mock_failing_tool(args: Dict[str, Any]) -> Dict[str, Any]:
     raise RuntimeError("Tool execution failed: Connection refused to remote API.")
+
 
 def _mock_invalid_output_tool(args: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "error", "error_code": "INVALID_RESPONSE_FORMAT", "data": None}
@@ -99,6 +106,7 @@ MOCK_TOOL_REGISTRY: Dict[str, ToolHandler] = {
 # Verification Logic (VERIFY)
 # ---------------------------------------------------------------------------
 
+
 def verify_step_execution(step: PlanStep, output: Any) -> tuple[bool, str]:
     if output is None:
         return False, "Step produced no output (None)."
@@ -113,6 +121,7 @@ def verify_step_execution(step: PlanStep, output: Any) -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # Plan -> Act -> Verify Executor Engine
 # ---------------------------------------------------------------------------
+
 
 class PlanActVerifyExecutor:
     """Orchestrates Plan -> Act -> Verify loop with both sync & async event streaming."""
@@ -167,7 +176,10 @@ class PlanActVerifyExecutor:
             if tool_name:
                 handler = self.tool_registry.get(tool_name)
                 if not handler:
-                    action_output = {"status": "success", "data": f"Executed mock handler for tool '{tool_name}'"}
+                    action_output = {
+                        "status": "success",
+                        "data": f"Executed mock handler for tool '{tool_name}'",
+                    }
                 else:
                     try:
                         action_output = handler({"command": command, "step": step_def.step_number})
@@ -176,10 +188,15 @@ class PlanActVerifyExecutor:
                         step_rec.status = StepStatus.FAILED
                         step_rec.error = err_msg
                         state.status = PlanStatus.FAILED
-                        state.error = f"Execution stopped at Step {step_rec.step_number} due to tool failure."
+                        state.error = (
+                            f"Execution stopped at Step {step_rec.step_number} due to tool failure."
+                        )
                         return state
             else:
-                action_output = {"status": "success", "data": f"Synthesized output for '{step_def.purpose}'"}
+                action_output = {
+                    "status": "success",
+                    "data": f"Synthesized output for '{step_def.purpose}'",
+                }
 
             step_rec.action_output = action_output
 
@@ -191,7 +208,9 @@ class PlanActVerifyExecutor:
                 step_rec.status = StepStatus.FAILED
                 step_rec.error = err_msg
                 state.status = PlanStatus.FAILED
-                state.error = f"Execution stopped at Step {step_rec.step_number} due to verification failure."
+                state.error = (
+                    f"Execution stopped at Step {step_rec.step_number} due to verification failure."
+                )
                 return state
 
             step_rec.status = StepStatus.COMPLETED
@@ -215,6 +234,7 @@ class PlanActVerifyExecutor:
           - SUCCESS: Overall plan completion
           - ERROR: Failure details at plan, action, or verification stage
         """
+
         def make_event(event_type: EventType, payload: Dict[str, Any]) -> Dict[str, Any]:
             return {
                 "event": event_type.value,
@@ -276,7 +296,10 @@ class PlanActVerifyExecutor:
             if step_def.tool:
                 handler = self.tool_registry.get(step_def.tool)
                 if not handler:
-                    action_output = {"status": "success", "data": f"Executed mock handler for tool '{step_def.tool}'"}
+                    action_output = {
+                        "status": "success",
+                        "data": f"Executed mock handler for tool '{step_def.tool}'",
+                    }
                 else:
                     try:
                         action_output = await asyncio.to_thread(
@@ -296,7 +319,10 @@ class PlanActVerifyExecutor:
                         )
                         return
             else:
-                action_output = {"status": "success", "data": f"Synthesized output for '{step_def.purpose}'"}
+                action_output = {
+                    "status": "success",
+                    "data": f"Synthesized output for '{step_def.purpose}'",
+                }
 
             # Emit EVIDENCE
             yield make_event(

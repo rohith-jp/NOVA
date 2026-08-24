@@ -54,6 +54,5 @@ def main():
         print(f"[OK] Test 4 PASSED: Handled empty input safely with PlannerError: '{pe}'")
 
 
-
 if __name__ == "__main__":
     main()

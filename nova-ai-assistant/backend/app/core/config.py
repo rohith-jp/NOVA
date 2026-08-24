@@ -8,6 +8,7 @@ Railway and local dev both inject variables through the process environment;
 python-dotenv loads .env only when running locally (load_dotenv is a no-op
 if the vars are already set, so it is safe in production too).
 """
+
 import os
 from dotenv import load_dotenv
 
@@ -43,9 +44,7 @@ class Settings:
 
     # ── Voice — ElevenLabs TTS ───────────────────────────────
     ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
-    ELEVENLABS_VOICE_ID: str = os.getenv(
-        "ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM"
-    )
+    ELEVENLABS_VOICE_ID: str = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
 
     # ── Security — field-level encryption ────────────────────
     # Must be set explicitly in production. Do NOT rely on the fallback.

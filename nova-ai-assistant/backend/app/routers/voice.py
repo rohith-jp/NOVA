@@ -1,4 +1,5 @@
 """Voice router — STT transcription endpoint."""
+
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 

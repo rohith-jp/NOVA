@@ -8,6 +8,7 @@ pytest configuration for NOVA backend tests.
   collected under the integration marker automatically via the
   path patterns in pytest.ini.
 """
+
 import os
 import pytest
 
@@ -28,14 +29,14 @@ def pytest_collection_modifyitems(config, items):
         # Auto-skip known live-API test files
         integration_files = {
             "test_gemini.py",
-            "test_planner.py",   # calls real Gemini
-            "test_memory.py",    # writes to real Supabase
-            "test_auth.py",      # hits real Supabase auth
+            "test_planner.py",  # calls real Gemini
+            "test_memory.py",  # writes to real Supabase
+            "test_auth.py",  # hits real Supabase auth
             "test_jwt_auth.py",  # hits real Supabase auth
-            "test_schema.py",    # needs real DB
-            "test_browser.py",   # needs running Celery + Redis
-            "test_voice.py",     # calls real ElevenLabs / Whisper
-            "test_ws_stream.py", # needs Gemini for live stream
+            "test_schema.py",  # needs real DB
+            "test_browser.py",  # needs running Celery + Redis
+            "test_voice.py",  # calls real ElevenLabs / Whisper
+            "test_ws_stream.py",  # needs Gemini for live stream
         }
         if item.fspath.basename in integration_files:
             if not run_integration:

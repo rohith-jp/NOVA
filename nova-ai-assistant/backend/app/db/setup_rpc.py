@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def setup_rpc():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
@@ -45,19 +46,20 @@ def setup_rpc():
         conn = psycopg2.connect(db_url)
         conn.autocommit = True
         cursor = conn.cursor()
-        
+
         # Ensure the column is 384 since the initial schema was 1536
         cursor.execute("ALTER TABLE memory_vectors ALTER COLUMN embedding TYPE vector(384);")
-        
+
         cursor.execute(sql)
         print("Successfully created match_memories RPC function.")
     except Exception as e:
         print(f"Failed to setup RPC: {e}")
     finally:
-        if 'cursor' in locals():
+        if "cursor" in locals():
             cursor.close()
-        if 'conn' in locals():
+        if "conn" in locals():
             conn.close()
+
 
 if __name__ == "__main__":
     setup_rpc()

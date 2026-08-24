@@ -11,6 +11,7 @@ from app.core.firewall import PromptInjectionBlockedError, sanitize_or_reject_ex
 
 logger = logging.getLogger(__name__)
 
+
 class SearchResult(BaseModel):
     title: str
     url: str
@@ -18,10 +19,12 @@ class SearchResult(BaseModel):
     safe: bool = True
     blocked_reason: Optional[str] = None
 
+
 class SearchResponse(BaseModel):
     query: str
     results: List[SearchResult]
     error: Optional[str] = None
+
 
 def perform_web_search(query: str, max_results: int = 3) -> SearchResponse:
     """
@@ -41,20 +44,15 @@ def perform_web_search(query: str, max_results: int = 3) -> SearchResponse:
         "include_answer": False,
         "include_images": False,
         "include_raw_content": False,
-        "max_results": max(max_results, 3) # Request at least 3 results
+        "max_results": max(max_results, 3),  # Request at least 3 results
     }
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
+
+    headers = {"Content-Type": "application/json"}
+
     req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST"
+        url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
     )
-    
+
     try:
         with urllib.request.urlopen(req, timeout=10.0) as response:
             resp_body = response.read().decode("utf-8")
@@ -68,24 +66,21 @@ def perform_web_search(query: str, max_results: int = 3) -> SearchResponse:
 
     raw_results = data.get("results", [])
     normalized_results = []
-    
+
     for item in raw_results:
         title = item.get("title", "No Title")
         url_link = item.get("url", "")
         content = item.get("content", "")
-        
+
         # Pass external content through the prompt injection firewall
         try:
             # We sanitize the content. If malicious, it raises an error.
             sanitized_content = sanitize_or_reject_external_input(content, source="tavily_search")
             sanitized_title = sanitize_or_reject_external_input(title, source="tavily_search")
-            
+
             normalized_results.append(
                 SearchResult(
-                    title=sanitized_title,
-                    url=url_link,
-                    content=sanitized_content,
-                    safe=True
+                    title=sanitized_title, url=url_link, content=sanitized_content, safe=True
                 )
             )
         except PromptInjectionBlockedError as pie:
@@ -97,7 +92,7 @@ def perform_web_search(query: str, max_results: int = 3) -> SearchResponse:
                     url=url_link,
                     content="[CONTENT BLOCKED BY FIREWALL]",
                     safe=False,
-                    blocked_reason=pie.result.reason
+                    blocked_reason=pie.result.reason,
                 )
             )
 

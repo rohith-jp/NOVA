@@ -15,6 +15,7 @@ Tests the full local NOVA pipeline:
 12. Audit log SHA-256 hash-chain verification walk
 13. Live WebSocket execution streaming (PLAN -> TOOL_CALL -> EVIDENCE -> DECISION -> SUCCESS)
 """
+
 import os
 import sys
 import time
@@ -32,7 +33,11 @@ from app.services.stt import transcribe_audio
 from app.services.tts import generate_speech
 from app.services.planner import generate_plan, ExecutionPlan, PlanStep
 from app.core.capability_tokens import create_capability_token, verify_capability_token
-from app.core.firewall import sanitize_or_reject_external_input, inspect_external_input, PromptInjectionBlockedError
+from app.core.firewall import (
+    sanitize_or_reject_external_input,
+    inspect_external_input,
+    PromptInjectionBlockedError,
+)
 from app.core.encryption import encrypt_field, decrypt_field
 from app.services.memory import create_memory, store_memory, search_memory
 from app.core.audit_log import AuditLogChain
@@ -53,8 +58,10 @@ class MockHttpResponse:
 @patch("httpx.Client.post")
 def test_step_1_and_2_voice_and_planning(mock_post):
     print("\n--- STEP 1 & 2: Voice Input (STT Whisper) & Plan Generation ---")
-    mock_post.return_value = MockHttpResponse(200, json_data={"text": "Search for Next.js 15 features"})
-    
+    mock_post.return_value = MockHttpResponse(
+        200, json_data={"text": "Search for Next.js 15 features"}
+    )
+
     # 1. Voice transcription
     stt_res = transcribe_audio(b"fake_wav_bytes", "sample.wav")
     assert stt_res.error is None
@@ -70,16 +77,18 @@ def test_step_1_and_2_voice_and_planning(mock_post):
 
 def test_step_3_and_4_capability_token_and_firewall():
     print("\n--- STEP 3 & 4: Capability Tokens & Firewall Defense ---")
-    
+
     # 3. Create & Verify Capability Token
     token = create_capability_token(
         user_id="user_e2e_1",
         task_id="task_e2e_1",
         plan_id="plan_e2e_1",
         tool_name="web_search",
-        allowed_scopes=["web_search:read"]
+        allowed_scopes=["web_search:read"],
     )
-    payload = verify_capability_token(token, required_tool="web_search", required_scope="web_search:read")
+    payload = verify_capability_token(
+        token, required_tool="web_search", required_scope="web_search:read"
+    )
     assert payload.user_id == "user_e2e_1"
     print("  [OK] Capability Token Issued & Verified Scope ('web_search:read')")
 
@@ -103,9 +112,11 @@ def test_step_3_and_4_capability_token_and_firewall():
 
 def test_step_5_6_7_8_verify_response_tts():
     print("\n--- STEP 5, 6, 7, 8: Verification & Response Speech (TTS) ---")
-    step = PlanStep(step_number=1, purpose="Search web", tool="web_search", expected_result="Search results")
+    step = PlanStep(
+        step_number=1, purpose="Search web", tool="web_search", expected_result="Search results"
+    )
     output = {"status": "success", "data": "Next.js 15 features"}
-    
+
     # 5 & 6. Verification
     is_valid, reason = verify_step_execution(step, output)
     assert is_valid is True
@@ -125,23 +136,28 @@ def test_step_5_6_7_8_verify_response_tts():
 def test_step_9_10_memory_encryption_and_recall(mock_get_client, mock_st):
     print("\n--- STEP 9 & 10: Encrypted Memory Storage & Semantic Recall ---")
     import app.services.memory
+
     app.services.memory._model = None
-    
+
     mock_model_instance = MagicMock()
+
     class MockOutput:
         def tolist(self):
             return [0.2] * 384
+
     mock_model_instance.encode.return_value = MockOutput()
     mock_st.return_value = mock_model_instance
 
     # Mock Supabase
     mock_client = MagicMock()
     mock_get_client.return_value = mock_client
-    
+
     # 9. Create Memory
     raw_content = "User prefers Next.js 15 App Router over Pages Router."
-    memory_dict = create_memory(user_id="user_e2e_1", content=raw_content, memory_type="preference", source="e2e_test")
-    
+    memory_dict = create_memory(
+        user_id="user_e2e_1", content=raw_content, memory_type="preference", source="e2e_test"
+    )
+
     # Assert encryption
     assert memory_dict["content"] != raw_content
     assert decrypt_field(memory_dict["content"]) == raw_content
@@ -165,12 +181,14 @@ def test_step_9_10_memory_encryption_and_recall(mock_get_client, mock_st):
     mock_rpc_exec = MagicMock()
     mock_client.rpc.return_value = mock_rpc
     mock_rpc.execute.return_value = mock_rpc_exec
-    mock_rpc_exec.data = [{
-        "id": "mem-uuid-999",
-        "content": memory_dict["content"],
-        "metadata": {"memory_type": "preference"},
-        "distance": 0.02
-    }]
+    mock_rpc_exec.data = [
+        {
+            "id": "mem-uuid-999",
+            "content": memory_dict["content"],
+            "metadata": {"memory_type": "preference"},
+            "distance": 0.02,
+        }
+    ]
 
     search_results = search_memory("user_e2e_1", "What router does the user prefer?")
     assert len(search_results) == 1
@@ -181,12 +199,27 @@ def test_step_9_10_memory_encryption_and_recall(mock_get_client, mock_st):
 def test_step_11_12_audit_log_and_hash_chain():
     print("\n--- STEP 11 & 12: Audit Logging & SHA-256 Hash-Chain Verification ---")
     chain = AuditLogChain()
-    
+
     # Add audit receipt entries
-    chain.add_entry(user_id="user_e2e_1", task_id="task_1", action_type="COMMAND_SUBMITTED", metadata={"cmd": "search"})
-    chain.add_entry(user_id="user_e2e_1", task_id="task_1", action_type="TOOL_EXECUTIVE_WEB_SEARCH", metadata={"status": "success"})
-    chain.add_entry(user_id="user_e2e_1", task_id="task_1", action_type="MEMORY_CREATED", metadata={"mem_id": "mem-uuid-999"})
-    
+    chain.add_entry(
+        user_id="user_e2e_1",
+        task_id="task_1",
+        action_type="COMMAND_SUBMITTED",
+        metadata={"cmd": "search"},
+    )
+    chain.add_entry(
+        user_id="user_e2e_1",
+        task_id="task_1",
+        action_type="TOOL_EXECUTIVE_WEB_SEARCH",
+        metadata={"status": "success"},
+    )
+    chain.add_entry(
+        user_id="user_e2e_1",
+        task_id="task_1",
+        action_type="MEMORY_CREATED",
+        metadata={"mem_id": "mem-uuid-999"},
+    )
+
     assert len(chain.entries) == 3
     print(f"  [OK] 3 Audit Receipts Recorded in Chain")
 
@@ -199,7 +232,7 @@ def test_step_11_12_audit_log_and_hash_chain():
 
 def test_step_13_websocket_event_streaming():
     print("\n--- STEP 13: WebSocket Event Streaming ---")
-    
+
     executor = PlanActVerifyExecutor()
     events_received = []
 
@@ -211,18 +244,20 @@ def test_step_13_websocket_event_streaming():
 
     evt_types = [e["event"] for e in events_received]
     print(f"  Received stream events: {evt_types}")
-    
+
     assert "PLAN" in evt_types
     assert "TOOL_CALL" in evt_types
     assert "EVIDENCE" in evt_types
     assert "DECISION" in evt_types
     assert "SUCCESS" in evt_types
-    
+
     # Ensure no hidden chain-of-thought in PLAN event
     plan_evt = next(e for e in events_received if e["event"] == "PLAN")
     assert "internal_notes" not in plan_evt["data"]
     assert "reasoning" not in plan_evt["data"]
-    print("  [OK] Live WebSocket Stream emitted PLAN -> TOOL_CALL -> EVIDENCE -> DECISION -> SUCCESS")
+    print(
+        "  [OK] Live WebSocket Stream emitted PLAN -> TOOL_CALL -> EVIDENCE -> DECISION -> SUCCESS"
+    )
     print("  [OK] Chain-of-thought suppressed from WebSocket payloads")
 
 
@@ -230,7 +265,7 @@ def main():
     print("=========================================================================")
     print(" STARTING NOVA COMPLETE LOCAL END-TO-END INTEGRATION TEST SUITE ")
     print("=========================================================================")
-    
+
     try:
         test_step_1_and_2_voice_and_planning()
         test_step_3_and_4_capability_token_and_firewall()
@@ -238,13 +273,14 @@ def main():
         test_step_9_10_memory_encryption_and_recall()
         test_step_11_12_audit_log_and_hash_chain()
         test_step_13_websocket_event_streaming()
-        
+
         print("\n=========================================================================")
         print(" ALL 13 END-TO-END INTEGRATION TEST STAGES PASSED SUCCESSFULLY! ")
         print("=========================================================================")
     except Exception as e:
         print(f"\nE2E INTEGRATION TEST FAILURE: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

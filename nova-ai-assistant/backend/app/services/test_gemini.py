@@ -4,7 +4,9 @@ from app.services.gemini import generate_response
 
 def test_gemini_integration():
     print("=== Testing Gemini API Integration ===")
-    test_prompt = "Say 'Hello from NOVA AI Assistant!' and confirm you are online in one concise sentence."
+    test_prompt = (
+        "Say 'Hello from NOVA AI Assistant!' and confirm you are online in one concise sentence."
+    )
     print(f"Sending test command: '{test_prompt}'\n")
 
     try:

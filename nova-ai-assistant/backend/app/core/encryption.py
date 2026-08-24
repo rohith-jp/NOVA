@@ -9,6 +9,7 @@ Security properties:
   3. Built-in GCM 128-bit authentication tag detects any ciphertext tampering.
   4. Plaintext sensitive values are never logged.
 """
+
 import os
 import base64
 import hashlib
@@ -34,6 +35,7 @@ _NONCE_BYTE_LENGTH = 12  # Standard 96-bit nonce for AES-GCM
 
 class EncryptionError(Exception):
     """Raised when encryption or decryption fails (e.g. tampering, invalid key, corrupt data)."""
+
     pass
 
 
@@ -104,7 +106,9 @@ def decrypt_field(ciphertext_b64: str, associated_data: Optional[bytes] = None) 
         return decrypted_bytes.decode("utf-8")
     except Exception as e:
         # GCM auth tag mismatch raises cryptography.exceptions.InvalidTag
-        logger.warning("[ENCRYPTION WARNING] Decryption failed: Data tampering or invalid key detected.")
+        logger.warning(
+            "[ENCRYPTION WARNING] Decryption failed: Data tampering or invalid key detected."
+        )
         raise EncryptionError(
             "Decryption failed: Ciphertext or authentication tag has been tampered with."
         ) from e

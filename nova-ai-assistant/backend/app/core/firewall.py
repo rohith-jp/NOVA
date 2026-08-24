@@ -6,6 +6,7 @@ or third-party APIs) before that content is passed to the planner or LLM.
 Note: This classifier uses rule-based heuristic pattern matching and entropy checks.
 It is an initial layer of defense and is not claimed to be 100% perfect.
 """
+
 import re
 import logging
 from enum import Enum
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Models & Enums
 # ---------------------------------------------------------------------------
 
+
 class FirewallDecision(str, Enum):
     ALLOW = "ALLOW"
     BLOCK = "BLOCK"
@@ -28,13 +30,16 @@ class FirewallResult(BaseModel):
     decision: FirewallDecision
     allowed: bool
     reason: str
-    risk_score: float = Field(..., ge=0.0, le=1.0, description="Risk score from 0.0 (safe) to 1.0 (malicious)")
+    risk_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Risk score from 0.0 (safe) to 1.0 (malicious)"
+    )
     matched_rules: List[str] = Field(default_factory=list)
     source: str = "external_tool"
 
 
 class PromptInjectionBlockedError(Exception):
     """Raised when untrusted content is blocked by the firewall."""
+
     def __init__(self, result: FirewallResult):
         super().__init__(f"Prompt Injection Blocked [source={result.source}]: {result.reason}")
         self.result = result
@@ -48,25 +53,37 @@ class PromptInjectionBlockedError(Exception):
 SUSPICIOUS_PATTERNS = [
     # 1. Instruction Overrides & Reset Attempts
     (r"(?i)ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", "INSTRUCTION_OVERRIDE", 0.9),
-    (r"(?i)disregard\s+(all\s+)?(previous|prior|above)\s+(instructions?|rules?)", "INSTRUCTION_OVERRIDE", 0.9),
+    (
+        r"(?i)disregard\s+(all\s+)?(previous|prior|above)\s+(instructions?|rules?)",
+        "INSTRUCTION_OVERRIDE",
+        0.9,
+    ),
     (r"(?i)forget\s+(all\s+)?(previous|prior|system)\s+instructions?", "INSTRUCTION_OVERRIDE", 0.9),
     (r"(?i)override\s+(the\s+)?system\s+prompt", "SYSTEM_PROMPT_OVERRIDE", 0.95),
     (r"(?i)you\s+are\s+now\s+a\s+(new|different)\s+ai", "ROLE_HIJACK", 0.85),
     (r"(?i)you\s+are\s+now\s+in\s+(dan|jailbreak|developer)\s+mode", "JAILBREAK_ATTEMPT", 0.95),
-
     # 2. System Role & Delimiter Impersonation
     (r"(?i)<\|im_start\|>", "CHATML_DELIMITER_INJECTION", 0.95),
     (r"(?i)<\|im_end\|>", "CHATML_DELIMITER_INJECTION", 0.95),
     (r"(?i)\[SYSTEM\s+INSTRUCTION\]", "SYSTEM_HEADER_IMPERSONATION", 0.9),
     (r"(?i)<<<SYSTEM>>>", "SYSTEM_HEADER_IMPERSONATION", 0.9),
     (r"(?i)^system:", "SYSTEM_ROLE_IMPERSONATION", 0.85),
-
     # 3. Credential & Prompt Exfiltration
-    (r"(?i)(output|print|reveal|display|show)\s+(your\s+|the\s+)?(system\s+prompt|initial\s+instructions)", "PROMPT_EXFILTRATION", 0.85),
-    (r"(?i)(output|print|reveal|display|show)\s+(your\s+|the\s+)?([a-z0-9_]*key|[a-z0-9_]*secret|env|environment\s+variables?|password|token)", "CREDENTIAL_EXFILTRATION", 0.9),
-    (r"(?i)(supabase_service_role_key|gemini_api_key|groq_api_key|anthropic_api_key)", "SPECIFIC_SECRET_EXFILTRATION", 0.95),
-
-
+    (
+        r"(?i)(output|print|reveal|display|show)\s+(your\s+|the\s+)?(system\s+prompt|initial\s+instructions)",
+        "PROMPT_EXFILTRATION",
+        0.85,
+    ),
+    (
+        r"(?i)(output|print|reveal|display|show)\s+(your\s+|the\s+)?([a-z0-9_]*key|[a-z0-9_]*secret|env|environment\s+variables?|password|token)",
+        "CREDENTIAL_EXFILTRATION",
+        0.9,
+    ),
+    (
+        r"(?i)(supabase_service_role_key|gemini_api_key|groq_api_key|anthropic_api_key)",
+        "SPECIFIC_SECRET_EXFILTRATION",
+        0.95,
+    ),
     # 4. Dangerous Code Execution Vectors
     (r"(?i)eval\s*\(\s*base64_decode", "MALICIOUS_CODE_EXEC", 0.9),
     (r"(?i)rm\s+-rf\s+/", "DESTRUCTIVE_COMMAND_INJECTION", 0.95),
@@ -79,6 +96,7 @@ ZERO_WIDTH_CHARS = ["\u200b", "\u200c", "\u200d", "\ufeff"]
 # ---------------------------------------------------------------------------
 # Firewall Classifier Engine
 # ---------------------------------------------------------------------------
+
 
 class PromptInjectionFirewall:
     """Prompt-Injection Firewall Classifier.
@@ -128,7 +146,9 @@ class PromptInjectionFirewall:
         final_risk = max_pattern_score
 
         if final_risk >= self.risk_threshold or len(matched_rules) > 0:
-            reason = f"Suspicious prompt-injection patterns detected: {', '.join(set(matched_rules))}"
+            reason = (
+                f"Suspicious prompt-injection patterns detected: {', '.join(set(matched_rules))}"
+            )
             logger.warning(f"[FIREWALL BLOCK] Source '{source}': {reason} (Risk: {final_risk})")
             return FirewallResult(
                 decision=FirewallDecision.BLOCK,

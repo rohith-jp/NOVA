@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from app.main import app
 
+
 def test_websocket_streaming():
     print("=== Testing FastAPI WebSocket Event Stream (/ws/stream) ===")
     client = TestClient(app)
